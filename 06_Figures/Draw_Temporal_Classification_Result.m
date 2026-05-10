@@ -5,12 +5,12 @@
 % Random condition shown as two gray lines (one per region).
 
 %% Inputs
-PARENT_PATH = 'H:\Data\Kim Data\robot_iti_iti_2s';
+PARENT_PATH = 'H:\Data\Kim Data\context_2s';
 BLA_CSV = fullfile(PARENT_PATH, 'temporal_BLA.csv');
 PFC_CSV = fullfile(PARENT_PATH, 'temporal_PFC.csv');
 
 %% Title
-PLOT_TITLE = 'Pellet Type (robot) ITI';
+PLOT_TITLE = 'Context (NP)';
 
 %% Style
 COLOR_BLA_REAL = '#E783B2';     % red
@@ -46,14 +46,14 @@ FIG_WIDTH_MM    = 130.91;       % figure width (axes + legend)
 % 0 = no star, 1 = '*', 2 = '**', 3 = '***'
 % STARS_BLA = [0 1 1 2 3 3 3 3 3 3];
 % STARS_PFC = [0 0 0 2 2 3 3 3 3 3];
-%STARS_BLA = [0 0 0 0 3 2 3 3];
-%STARS_PFC = [0 0 1 2 3 3 3 3];
-STARS_BLA = [0 0 0 0 3 2 2 3 0 0];
-STARS_PFC = [0 0 0 1 3 3 2 1 2 2];
+STARS_BLA = [1 3 3 3 3 3 2 0];
+STARS_PFC = [3 3 3 3 3 3 3 3];
+%STARS_BLA = [0 0 0 0 3 2 3 3 0 0];
+%STARS_PFC = [0 0 1 2 3 3 3 3 3 2];
 %% Time windows
 %TIME_WINDOWS = [-7 -3; -6 -2; -5 -1; -4 0; -3 1; -2 2; -1 3; 0 4; 1 5; 2 6];
-%TIME_WINDOWS = [-8 -6; -6 -4; -4 -2; -2 0; 0 2; 2 4; 4 6; 6 8];
-TIME_WINDOWS = [-8 -6; -6 -4; -4 -2; -2 0; 0 2; 2 4; 4 6; 6 8; 8 10; 10 12];
+TIME_WINDOWS = [-8 -6; -6 -4; -4 -2; -2 0; 0 2; 2 4; 4 6; 6 8];
+%TIME_WINDOWS = [-8 -6; -6 -4; -4 -2; -2 0; 0 2; 2 4; 4 6; 6 8; 8 10; 10 12];
 n_win = size(TIME_WINDOWS, 1);
 x = 1:n_win;
 % xtick_labels = arrayfun(@(i) sprintf('%d ~ %d', TIME_WINDOWS(i,1), TIME_WINDOWS(i,2)), ...
@@ -155,8 +155,9 @@ for j = 1:n_win
     end
 end
 
-% Reference line at chance
-yline(ax, 0.5, ':', 'Color', [0 0 0], 'LineWidth', 0.6, 'Alpha', 0.5, 'HandleVisibility','off');
+% % Reference line at chance
+% yline(ax, 0.5, ':', 'Color', [0 0 0], 'LineWidth', 0.6, 'Alpha', 0.5, 'HandleVisibility','off');
+xline(4.5, 'Color', 'r', 'LineStyle', '--');
 
 % Axes — fonts, thickness, tick direction
 ax.LineWidth   = AXIS_LW;
@@ -166,7 +167,7 @@ ax.FontWeight  = FONT_WEIGHT;
 ax.TickDir     = 'out';
 ax.TickDirMode = 'manual';
 
-xlabel(ax, 'Time window (s, relative to event)', ...
+xlabel(ax, 'Time from Event (s)', ...
     'FontName', FONT_NAME, 'FontSize', FONT_SIZE, 'FontWeight', FONT_WEIGHT);
 ylabel(ax, 'Balanced Accuracy', ...
     'FontName', FONT_NAME, 'FontSize', FONT_SIZE, 'FontWeight', FONT_WEIGHT);
@@ -182,9 +183,8 @@ title(ax, PLOT_TITLE, 'FontName', FONT_NAME, 'FontSize', TITLE_SIZE, 'FontWeight
 % Y-axis: 0.1 spacing
 ylim(ax, [0.4, 0.9]);
 yticks(ax, 0.4:0.1:0.9);
-xline(4.5, 'Color', 'r', 'LineStyle', '--')
 legend(ax, [h_bla_rand, h_pfc_rand, h_bla_real, h_pfc_real], ...
-    {'BLA Random', 'PFC Random', 'BLA Real', 'PFC Real'}, ...
+    {'BLA Random', 'mPFC Random', 'BLA Real', 'mPFC Real'}, ...
     'Location', 'eastoutside', 'Box', 'off', ...
     'FontName', FONT_NAME, 'FontSize', FONT_SIZE, 'FontWeight', 'normal');
 

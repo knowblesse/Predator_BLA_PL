@@ -4,12 +4,12 @@
 % Paired difference per session, mean + SEM band, with Sidak-corrected stars.
 
 %% Inputs
-PARENT_PATH = 'H:\Data\Kim Data\robot_iti_iti_2s';
+PARENT_PATH = 'H:\Data\Kim Data\context_2s';
 BLA_CSV = fullfile(PARENT_PATH, 'temporal_BLA.csv');
 PFC_CSV = fullfile(PARENT_PATH, 'temporal_PFC.csv');
 
 %% Title
-PLOT_TITLE = 'PFC − BLA';
+PLOT_TITLE = 'Context (NP)';
 
 %% Style
 COLOR_DIFF = '#7B2D8E';     % purple
@@ -22,7 +22,7 @@ DOT_SIZE    = 5;
 AXIS_LW     = 1.44;
 FONT_NAME   = 'Arial';
 FONT_SIZE   = 12;
-FONT_WEIGHT = 'bold';
+FONT_WEIGHT = 'normal';
 
 TITLE_SIZE  = 13.92;
 
@@ -39,11 +39,11 @@ AXES_HEIGHT_MM   = 51;
 
 %% Time windows
 %TIME_WINDOWS = [-7 -3; -6 -2; -5 -1; -4 0; -3 1; -2 2; -1 3; 0 4; 1 5; 2 6];
-%TIME_WINDOWS = [-8 -6; -6 -4; -4 -2; -2 0; 0 2; 2 4; 4 6; 6 8];
-TIME_WINDOWS = [-8 -6; -6 -4; -4 -2; -2 0; 0 2; 2 4; 4 6; 6 8; 8 10; 10 12];
+TIME_WINDOWS = [-8 -6; -6 -4; -4 -2; -2 0; 0 2; 2 4; 4 6; 6 8];
+%TIME_WINDOWS = [-8 -6; -6 -4; -4 -2; -2 0; 0 2; 2 4; 4 6; 6 8; 8 10; 10 12];
 n_win = size(TIME_WINDOWS, 1);
 x = 1:n_win;
-xtick_labels = arrayfun(@(i) sprintf('%d ~ %d', TIME_WINDOWS(i,1), TIME_WINDOWS(i,2)), ...
+xtick_labels = arrayfun(@(i) sprintf('%d', (TIME_WINDOWS(i,2) + TIME_WINDOWS(i,1))/2), ...
                         1:n_win, 'UniformOutput', false);
 
 %% Load data
@@ -84,27 +84,27 @@ for j = 1:n_win
     [~, p_raw(j)] = ttest(pfc_real(:,j), bla_real(:,j));   % paired t-test
 end
 
-% % Sidak correction: p_corr = 1 - (1 - p)^m
-% p_sidak = 1 - (1 - p_raw).^n_win;
-% p_corr = min(p_sidak, 1);  % clip to [0,1]
+% Sidak correction: p_corr = 1 - (1 - p)^m
+p_sidak = 1 - (1 - p_raw).^n_win;
+p_corr = min(p_sidak, 1);  % clip to [0,1]
  
 % % Bonferroni
 % p_corr = p_raw * n_win;
 % p_corr = min(p_corr, 1);
 
-% Sort p-values, apply BH adjustment, then enforce monotonicity
-[p_sorted, sort_idx] = sort(p_raw);
-ranks = 1:n_win;
-p_bh_sorted = p_sorted .* n_win ./ ranks;
-
-% Enforce monotonicity from largest to smallest
-for k = n_win-1:-1:1
-    p_bh_sorted(k) = min(p_bh_sorted(k), p_bh_sorted(k+1));
-end
-% Unsort back to original window order
-p_corr = zeros(1, n_win);
-p_corr(sort_idx) = p_bh_sorted;
-p_corr = min(p_corr, 1);
+% % Sort p-values, apply BH adjustment, then enforce monotonicity
+% [p_sorted, sort_idx] = sort(p_raw);
+% ranks = 1:n_win;
+% p_bh_sorted = p_sorted .* n_win ./ ranks;
+% 
+% % Enforce monotonicity from largest to smallest
+% for k = n_win-1:-1:1
+%     p_bh_sorted(k) = min(p_bh_sorted(k), p_bh_sorted(k+1));
+% end
+% % Unsort back to original window order
+% p_corr = zeros(1, n_win);
+% p_corr(sort_idx) = p_bh_sorted;
+% p_corr = min(p_corr, 1);
 
 % Convert corrected p-values to star counts
 STARS = zeros(1, n_win);
@@ -128,6 +128,7 @@ hold(ax, 'on');
 
 % Reference line at zero
 yline(ax, 0, '-', 'Color', [0 0 0], 'LineWidth', 0.6, 'Alpha', 0.5, 'HandleVisibility', 'off');
+xline(4.5, 'Color', 'r', 'LineStyle', '--');
 
 % PFC - BLA — thick line + SEM band
 [~, h_diff, ~] = shadeplot(x, diff_mat, ...
@@ -157,18 +158,18 @@ ax.FontWeight  = FONT_WEIGHT;
 ax.TickDir     = 'out';
 ax.TickDirMode = 'manual';
 
-xlabel(ax, 'Time window (s, relative to event)', ...
+xlabel(ax, 'Time from Event (s)', ...
     'FontName', FONT_NAME, 'FontSize', FONT_SIZE, 'FontWeight', FONT_WEIGHT);
-ylabel(ax, 'Δ Balanced Accuracy (PFC − BLA)', ...
+ylabel(ax, 'Accuracy Difference (PFC - BLA)', ...
     'FontName', FONT_NAME, 'FontSize', FONT_SIZE, 'FontWeight', FONT_WEIGHT);
 xticks(ax, x);
 xticklabels(ax, xtick_labels);
 xlim(ax, [0.5 n_win+0.5]);
-ax.XTickLabelRotation = 45;
+%ax.XTickLabelRotation = 45;
 ax.Box = 'off';
 
 % Title
-title(ax, PLOT_TITLE, 'FontName', FONT_NAME, 'FontSize', TITLE_SIZE, 'FontWeight', 'bold');
+title(ax, PLOT_TITLE, 'FontName', FONT_NAME, 'FontSize', TITLE_SIZE, 'FontWeight', 'normal');
 
 % Y-axis: -0.10 to 0.25, 0.05 spacing
 ylim(ax, [-0.10, 0.25]);
