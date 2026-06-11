@@ -8,7 +8,7 @@ from sklearn.model_selection import LeaveOneOut, cross_val_predict
 from sklearn.metrics import balanced_accuracy_score
 import csv
 
-single_unit_datapoint = 40 # number of features per single unit (4 sec * 100ms bins = 40)
+single_unit_datapoint = 20 # number of features per single unit (2 sec * 100ms bins = 20)
 
 # Define classification function
 def loo_score_with_null(X, y, n_shuffles=100, random_state=516):
@@ -71,7 +71,7 @@ def run_classification(matlab_dataset_path):
 if __name__ == "__main__":
     BASE_PATH = Path(r"H:\Data\Kim Data")
 
-    dataset_name = 'RobotNP_RobotP_pred'
+    dataset_name = 'RobotNP_RobotP_ITI'
 
     session_paths = sorted(list(BASE_PATH.glob('@*')))
 

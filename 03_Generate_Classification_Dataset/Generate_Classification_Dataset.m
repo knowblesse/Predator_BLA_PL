@@ -35,7 +35,7 @@ for session = 1 : numel(sessionPaths)
             eventTime1 = double([eventData([eventData.Robot] == 0).NP]);
             eventTime2 = double([eventData([eventData.Robot] == 1).NP]);
             [X, y, region] = generateEventClassifierDataset(tankPath, eventTime1, eventTime2, ...
-                [-2000, +2000], 100, 1000, 100);
+                [-1000, +1000], 100, 1000, 100);
             save(fullfile(tankPath,"PreRobotNP_RobotNP.mat"), "X", "y", "region");
         case 2
             % 2 : Event1 vs Event2: pre-robot NP vs. pre-robot P
@@ -43,7 +43,7 @@ for session = 1 : numel(sessionPaths)
             eventTime1 = double([eventData([eventData.Robot] == 0).NP]);
             eventTime2 = double([eventData([eventData.Robot] == 0).P]);
             [X, y, region] = generateEventClassifierDataset(tankPath, eventTime1, eventTime2, ...
-                [-2000, +2000], 100, 1000, 100);
+                [-1000, +1000], 100, 1000, 100);
             save(fullfile(tankPath,"PreRobotNP_PreRobotP.mat"), "X", "y", "region");
         case 3
             % 3 : Event1 vs Event2: pre-robot NP vs. pre-robot P
@@ -282,8 +282,26 @@ for session = 1 : numel(sessionPaths)
                 continue;
             end
             [X, y, region] = generateEventClassifierDataset(tankPath, eventTime1, eventTime2, ...
-                [-2000, 2000], 100, 1000, 100);
+                [-1000, 1000], 100, 1000, 100);
             save(fullfile(tankPath,"RobotNP_RobotP_ITI.mat"), "X", "y", "region");
+        case 19
+            % 19 : Event1 vs Event2: pre-robot P vs. robot P
+            % PreRobotP_RobotP
+            eventTime1 = double([eventData([eventData.Robot] == 0).NP]);
+            eventTime2 = []; % Robot session + P 
+            
+            for i = 1 : size(eventDataRaw,1)
+                if eventDataRaw.Robot(i) == 1 & eventDataRaw.PelletType(i) == "P"
+                    eventTime2 = [eventTime2; double(eventDataRaw.Time_ms(i))];
+                end
+            end
+            if numel(eventTime2) <3
+                fprintf("Skipped due to small event number\n");
+                continue;
+            end
+            [X, y, region] = generateEventClassifierDataset(tankPath, eventTime1, eventTime2, ...
+                [-1000, 1000], 100, 1000, 100);
+            save(fullfile(tankPath,"PreRobotP_RobotP.mat"), "X", "y", "region");
     end
 
 end

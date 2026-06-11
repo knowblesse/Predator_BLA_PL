@@ -13,8 +13,10 @@ single_unit_datapoint = 20  # 4 sec * 100ms bins = 40 features per single unit
 
 # TIME_WINDOWS = [(-7, -3), (-6, -2), (-5, -1), (-4, 0), (-3, 1),
 #                 (-2, 2), (-1, 3), (0, 4), (1, 5), (2, 6)]
-TIME_WINDOWS = [(-8, -6), (-6, -4), (-4, -2), (-2, 0), (0, 2),
-                (2, 4), (4, 6), (6, 8), (8, 10), (10, 12)]
+# TIME_WINDOWS = [(-8, -6), (-6, -4), (-4, -2), (-2, 0), (0, 2),
+#                 (2, 4), (4, 6), (6, 8), (8, 10), (10, 12)]
+TIME_WINDOWS = [(-12, -10), (-10, -8)]
+
 
 
 def loo_score_with_null(X, y, n_shuffles=100, random_state=516):
@@ -77,7 +79,7 @@ if __name__ == "__main__":
     results = {sp.name: {} for sp in session_paths}
 
     for w_idx, (t0, t1) in enumerate(TIME_WINDOWS):
-        dataset_name = f'RobotNP_RobotP_ITI_ITI_{t0}_{t1}'
+        dataset_name = f'PreRobotNP_PreRobotP_{t0}_{t1}'
         print(f"\n=== Window {w_idx+1}/{len(TIME_WINDOWS)}: {dataset_name} ===")
 
         for i, session_path in enumerate(session_paths, 1):
