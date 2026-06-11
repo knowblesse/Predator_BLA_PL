@@ -1,7 +1,7 @@
 function [output] = calculateEventMarkerTE(tankPath, K, k_past, n_surrogates)
 %% Parameters
 min_events = 3;
-n_subsamples = 10; % number of random subsamples for blocks with excess events
+n_subsamples = 30; % number of random subsamples for blocks with excess events
 timewindow_bin = 50;        % msec
 kernel_size = 500;          % msec
 kernel_std = 50;            % msec
@@ -32,7 +32,7 @@ pre_robot_NP_P_times = double(eventDataRaw.Time_ms(eventDataRaw.Robot == 0));
 robot_NP_times = double(eventDataRaw.Time_ms(eventDataRaw.Robot == 1 & eventDataRaw.PelletType == "NP"));
 
 %% Determine matched event count
-N_matched = min([numel(pre_robot_NP_times), numel(attack_times), numel(robot_NP_times)]);
+N_matched = min([numel(pre_robot_NP_P_times), numel(attack_times), numel(robot_NP_times)]);
 if N_matched < min_events
     warning('Session %s: Only %d matched events (min: %d). Skipping.', tankName, N_matched, min_events);
     output = [];
@@ -210,6 +210,7 @@ for m = 1:num_marker
 
         nAvailable = numel(marker_label_events{m, 1});
         for s = 1:n_subsamples
+            rng(516);
             sub_idx = randperm(nAvailable, N_matched);
             bla_ev = marker_label_events{m, 1}(sub_idx);
             pfc_ev = marker_label_events{m, 2}(sub_idx);
