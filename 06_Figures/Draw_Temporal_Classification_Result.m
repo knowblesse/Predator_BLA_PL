@@ -5,12 +5,12 @@
 % Random condition shown as two gray lines (one per region).
 
 %% Inputs
-PARENT_PATH = 'H:\Data\Kim Data\context_2s';
+PARENT_PATH = 'H:\Data\Kim Data\context_P_2s';
 BLA_CSV = fullfile(PARENT_PATH, 'temporal_BLA.csv');
 PFC_CSV = fullfile(PARENT_PATH, 'temporal_PFC.csv');
 
 %% Title
-PLOT_TITLE = 'Context (NP)';
+PLOT_TITLE = 'Context (P)';
 
 %% Style
 COLOR_BLA_REAL = '#E783B2';     % red
@@ -46,8 +46,8 @@ FIG_WIDTH_MM    = 130.91;       % figure width (axes + legend)
 % 0 = no star, 1 = '*', 2 = '**', 3 = '***'
 % STARS_BLA = [0 1 1 2 3 3 3 3 3 3];
 % STARS_PFC = [0 0 0 2 2 3 3 3 3 3];
-STARS_BLA = [1 3 3 3 3 3 2 0];
-STARS_PFC = [3 3 3 3 3 3 3 3];
+STARS_BLA = [0 0 1 0 3 3 3 3];
+STARS_PFC = [0 2 2 3 3 3 3 2];
 %STARS_BLA = [0 0 0 0 3 2 3 3 0 0];
 %STARS_PFC = [0 0 1 2 3 3 3 3 3 2];
 %% Time windows

@@ -4,12 +4,12 @@
 % Paired difference per session, mean + SEM band, with Sidak-corrected stars.
 
 %% Inputs
-PARENT_PATH = 'H:\Data\Kim Data\context_2s';
+PARENT_PATH = 'H:\Data\Kim Data\context_P_2s';
 BLA_CSV = fullfile(PARENT_PATH, 'temporal_BLA.csv');
 PFC_CSV = fullfile(PARENT_PATH, 'temporal_PFC.csv');
 
 %% Title
-PLOT_TITLE = 'Context (NP)';
+PLOT_TITLE = 'Context (P)';
 
 %% Style
 COLOR_DIFF = '#7B2D8E';     % purple
