@@ -28,6 +28,7 @@ load(eventFilePath);
 %% Define event times
 attack_times = double(eventDataRaw.Time_ms(eventDataRaw.Robot == 1 & eventDataRaw.PelletType == "P"));
 pre_robot_NP_times = double(eventDataRaw.Time_ms(eventDataRaw.Robot == 0 & eventDataRaw.PelletType == "NP"));
+pre_robot_NP_P_times = double(eventDataRaw.Time_ms(eventDataRaw.Robot == 0));
 robot_NP_times = double(eventDataRaw.Time_ms(eventDataRaw.Robot == 1 & eventDataRaw.PelletType == "NP"));
 
 %% Determine matched event count
@@ -63,7 +64,7 @@ marker5_range = [-event_duration, 0];
 
 num_marker = 5;
 marker_names = {'Control', 'PreRobotNP', 'BeforeAttack', 'AfterAttack', 'NP_Robot'};
-all_marker_times = {marker1_times, pre_robot_NP_times, attack_times, attack_times, robot_NP_times};
+all_marker_times = {marker1_times, pre_robot_NP_P_times, attack_times, attack_times, robot_NP_times};
 marker_ranges = {marker1_range, marker2_range, marker3_range, marker4_range, marker5_range};
 needs_subsample = [false, true, true, true, true];
 
