@@ -1,4 +1,5 @@
 
 *.asv
-
+.lib/
+.Not Used/
 .idea/
