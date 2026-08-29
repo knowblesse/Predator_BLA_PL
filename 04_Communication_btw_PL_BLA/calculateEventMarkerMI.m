@@ -1,9 +1,10 @@
-function [output, bla, pfc] = calculateEventMarkerMI(tankPath, K)
+function [output, bla, pfc, bin_count] = calculateEventMarkerMI(tankPath, K)
 
 %% Parameters
 timewindow_bin = 50; % msec
 kernel_size = 1000;
 kernel_std = 100;
+n_subsamples = 10;
 
 %% Load Session data
 %tankPath = 'H:\Data\Kim Data\@AP18_031218';
@@ -32,13 +33,12 @@ load(eventFilePath);
 firstRobotIdx = find(eventDataRaw.Robot,1);
 lastPreRobotIdx = firstRobotIdx - 1;
 
-marker1_range = [-5000, +5000];
 marker1 = double(round( ...
     (eventDataRaw.Time_ms(firstRobotIdx) - eventDataRaw.Time_ms(lastPreRobotIdx)) /2 + eventDataRaw.Time_ms(lastPreRobotIdx)...
     )); 
 
-% Group2 (Pre-robot): -1 ~ +1 data during NP and P
-marker2_range = [-1000, +1000];
+% Group2 (Pre-robot): -2.5 ~ +2.5 data during NP and P
+marker2_range = [-2500, +2500];
 marker2 = double(eventDataRaw.Time_ms(eventDataRaw.Robot == 0));
 
 % Group 3 (Robot before P): -5 ~ 0 data during P
@@ -49,19 +49,26 @@ marker3 = double(eventDataRaw.Time_ms(eventDataRaw.Robot == 1 & eventDataRaw.Pel
 marker4 = marker3;
 fprintf("Num P during Robot phase: %d", numel(marker3));
 
-% Group 5 (Robot before NP right after P): -5 ~ 0 data during NP
-marker5_range = [-5000, 0];
-marker5 = [];
-for i = find(eventDataRaw.Robot,1)+1 : size(eventDataRaw,1)
-    if eventDataRaw.PelletType(i) == "NP" & eventDataRaw.PelletType(i-1) == "P"
-        marker5 = [marker5, double(eventDataRaw.Time_ms(i))];
-    end
-end
+% Group 5 (Robot before NP right after P): -2.5 ~ +2.5 data during NP
+marker5_range = [-2500, +2500];
+% marker5 = [];
+% for i = find(eventDataRaw.Robot,1)+1 : size(eventDataRaw,1)
+%     if eventDataRaw.PelletType(i) == "NP" & eventDataRaw.PelletType(i-1) == "P"
+%         marker5 = [marker5, double(eventDataRaw.Time_ms(i))];
+%     end
+% end
+marker5 = double(eventDataRaw.Time_ms(eventDataRaw.Robot == 1 & eventDataRaw.PelletType == "NP"));
+
 fprintf(" | Num NP after P: %d\n", numel(marker5));
 
 num_marker_type = 5;
-marker_ranges = {marker1_range, marker2_range, marker3_range, marker4_range, marker5_range};
 markers = {marker1, marker2, marker3, marker4, marker5};
+
+% Determine control range
+N_min = min(cellfun(@(C) numel(C), markers(2:end)));
+marker1_range = [-2500, +2500] .* N_min;
+
+marker_ranges = {marker1_range, marker2_range, marker3_range, marker4_range, marker5_range};
 
 %% Read unit file
 unitData = table([], [], {}, 'VariableName', {'unitNumber', 'numSpike', 'time_ms'});
@@ -145,7 +152,7 @@ for u = 1 : numUnit
             end
 
             % The index of the whole_serial_data is actual timepoint in ms.
-            % So retrive the value in the window by index.
+            % So retrieve the value in the window by index.
             snippet = whole_serial_data(signal_window(1)+1:signal_window(2));
             snippet_binned = mean(reshape(snippet, timewindow_bin, []), 1);
 
@@ -157,52 +164,76 @@ end
 
 clearvars *serial_data* signal_window i_time kernel*
 
-% now we have marker_data
+%% Subsampled MI computation
+bins_per_event = diff(marker_ranges{2}) / timewindow_bin; % 100 bins per event (all epochs 5s)
+n_subsamples = 10;
 
-%% Split BLA and PFC
-marker_data_split = cell(num_marker_type, 2);
-for i = 1 : num_marker_type
-    marker_data_split{i, 1} = marker_data{i}(region == "BLA", :); % num neuron x num bin 
-    marker_data_split{i, 2} = marker_data{i}(region == "PFC", :);
+output_all = zeros(n_subsamples, num_marker_type);
+bla_all = zeros(n_subsamples, num_marker_type);
+pfc_all = zeros(n_subsamples, num_marker_type);
+
+for s = 1:n_subsamples
+    %% Subsample N_min events from each marker (control stays as-is)
+    marker_data_sub = cell(num_marker_type, 1);
+    marker_data_sub{1} = marker_data{1}; % control: already correct size
+
+    for i = 2:num_marker_type
+        nEv = numel(markers{i});
+        sub_idx = randperm(nEv, N_min);
+        sub_data = zeros(numUnit, bins_per_event * N_min);
+        for ei = 1:N_min
+            src_cols = bins_per_event*(sub_idx(ei)-1)+1 : bins_per_event*sub_idx(ei);
+            dst_cols = bins_per_event*(ei-1)+1 : bins_per_event*ei;
+            sub_data(:, dst_cols) = marker_data{i}(:, src_cols);
+        end
+        marker_data_sub{i} = sub_data;
+    end
+
+    %% Split BLA and PFC
+    marker_data_split = cell(num_marker_type, 2);
+    for i = 1:num_marker_type
+        marker_data_split{i, 1} = marker_data_sub{i}(region == "BLA", :);
+        marker_data_split{i, 2} = marker_data_sub{i}(region == "PFC", :);
+    end
+
+    BLA_all = cell2mat(marker_data_split(:,1)');
+    PFC_all = cell2mat(marker_data_split(:,2)');
+
+    %% K-means on this subsample
+    rng(516 + s);
+    BLA_labels_all = kmeans(BLA_all', K, 'Replicates', 10, 'MaxIter', 1000);
+    PFC_labels_all = kmeans(PFC_all', K, 'Replicates', 10, 'MaxIter', 1000);
+
+    %% Split labels
+    marker_label = cell(num_marker_type, 2);
+    Ti = cellfun(@(X) size(X,2), marker_data_split(:,1));
+    cs = [0; cumsum(Ti)];
+    for i = 1:num_marker_type
+        idx = (cs(i)+1):cs(i+1);
+        marker_label{i,1} = BLA_labels_all(idx);
+        marker_label{i,2} = PFC_labels_all(idx);
+    end
+
+    %% Compute zMI
+    [~, Hx, Hy] = mutual_information(BLA_labels_all, PFC_labels_all, K);
+    if Hx == 0 || Hy == 0
+        error("Weird entropy");
+    end
+
+    for i = 1:num_marker_type
+        [m_, hx, hy] = mutual_information(marker_label{i,1}, marker_label{i,2}, K);
+        output_all(s, i) = m_ / sqrt(Hx * Hy);
+        bla_all(s, i) = hx;
+        pfc_all(s, i) = hy;
+    end
+
+    fprintf('Subsample %d/%d done\n', s, n_subsamples);
 end
 
-% each marker_data_split{i, 1} has same row but different bin.
-% call marker_data_split(:,1), transpose by '.
-% now we can use cell2mat
-BLA_all = cell2mat(marker_data_split(:,1)'); % num neuron x all bins
-PFC_all = cell2mat(marker_data_split(:,2)');
+%% Average across subsamples
+output = mean(output_all, 1);
+bla = mean(bla_all, 1);
+pfc = mean(pfc_all, 1);
+bin_count = repmat(bins_per_event * N_min, 1, num_marker_type);
 
-%% KMean Clustering to reduce state space
-rng(516);
-BLA_labels_all = kmeans(BLA_all', K, 'Replicates', 10, 'MaxIter', 1000); % row should be samples and col should be dimension (neuron)
-PFC_labels_all = kmeans(PFC_all', K, 'Replicates', 10, 'MaxIter', 1000);
-
-%% Split BLA and PFC data
-marker_label = cell(num_marker_type, 2);
-Ti = cellfun(@(X) size(X,2), marker_data_split(:,1));
-cs = [0; cumsum(Ti)];
-for i = 1:num_marker_type
-    idx = (cs(i)+1):cs(i+1);
-    marker_label{i,1} = BLA_labels_all(idx);
-    marker_label{i,2} = PFC_labels_all(idx);
-end
-
-clearvars *_data_BLA *_data_PFC *labels_
-
-%% Compute zMI
-[~, Hx, Hy] = mutual_information(BLA_labels_all, PFC_labels_all, K);
-
-if Hx == 0 | Hy == 0
-    error("Weird entropy");
-end
-
-output = zeros(1, num_marker_type);
-bla = zeros(1, num_marker_type);
-pfc = zeros(1, num_marker_type);
-for i = 1 : num_marker_type
-    [m_, hx, hy] = mutual_information(marker_label{i, 1}, marker_label{i, 2}, K);
-    output(i) = m_ / sqrt(Hx * Hy);
-    bla(i) = hx;
-    pfc(i) = hy;
-end
 end
