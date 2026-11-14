@@ -287,7 +287,7 @@ for session = 1 : numel(sessionPaths)
         case 19
             % 19 : Event1 vs Event2: pre-robot P vs. robot P
             % PreRobotP_RobotP
-            eventTime1 = double([eventData([eventData.Robot] == 0).NP]);
+            eventTime1 = double([eventData([eventData.Robot] == 0).P]);
             eventTime2 = []; % Robot session + P 
             
             for i = 1 : size(eventDataRaw,1)
